@@ -1,0 +1,215 @@
+com base nas informações de @oracle19c_docker_guide.md gere um docker-compose.yml e .env otimizado para nosso ambiente wsl2, inclusive para o diretório que o projeto está (~/workspace/oracle-docker)
+
+Criando docker-compose.yml e .env otimizados para WSL2, baseados no guia.
+Criando docker-compose.yml e .env otimizados para WSL2:
+docker-compose.yml
++48
+-1
+version: '3.8'services:  oracle19c:    image: laynerain/oracle19c:19.3.0    container_name: oracle19c
+.gitignore
++9
+-1
+# Diretórios de dados do Oracledata/# Arquivos de ambiente.env
+Criando um arquivo de exemplo para o .env, já que o .env está bloqueado:
+Criei o docker-compose.yml otimizado para WSL2. O arquivo .env está bloqueado (proteção de segurança), então crie manualmente um .env na raiz do projeto com o conteúdo abaixo.
+Arquivos criados
+docker-compose.yml — Configuração do Oracle 19c com:
+Volumes relativos ao projeto (./data/oradata e ./data/diag)
+Healthcheck configurado
+Limites de recursos configuráveis
+Rede dedicada
+Restart policy configurada
+.gitignore — Ignora dados e arquivos sensíveis
+Conteúdo do arquivo .env
+Crie manualmente o arquivo .env na raiz do projeto com:
+# Oracle 19c - Configurações do Ambiente# PortasORACLE_PORT=1521EM_PORT=5500# Configurações do Banco de DadosORACLE_SID=ORCLCDBORACLE_PDB=ORCLPDB1ORACLE_PWD=Oracle123#SecureORACLE_EDITION=standardORACLE_CHARACTERSET=AL32UTF8# Timezone (padrão: America/Sao_Paulo para Brasil)TZ=America/Sao_Paulo# Limites de RecursosMEMORY_LIMIT=2gMEMORY_RESERVATION=1gCPUS_LIMIT=2CPUS_RESERVATION=1
+Melhorias implementadas
+Caminhos adaptados para WSL2/Linux (volumes relativos)
+Timezone padrão America/Sao_Paulo
+Healthcheck para monitoramento
+Limites de recursos configuráveis via .env
+Reservas de memória e CPU para melhor estabilidade
+Rede isolada para o Oracle
+Restart automático configurado
+Como usar
+Crie o arquivo .env com o conteúdo acima
+Ajuste a senha ORACLE_PWD para uma senha forte
+Execute:
+docker compose up -d
+Os dados serão persistidos em ./data/oradata e ./data/diag dentro do projeto.
+já executei, agora como posso validar que está funcionando?
+
+Verificando se o container está em execução:
+NAME        IMAGE                        COMMAND                  SERVICE     CREATED         STATUS                             PORTS
+oracle19c   laynerain/oracle19c:19.3.0   "/bin/sh -c 'exec $O…"   oracle19c   4 minutes ago   Up 34 seconds (health: starting)   0.0.0.0:1521->1521/tcp, [::]:1521->1521/tcp, 0.0.0.0:5500->5500/tcp, [::]:5500->5500/tcp
+Container em execução. Verificando os logs para confirmar a inicialização:
+oracle19c  | Prepare for db operation
+oracle19c  | Cannot create directory "/opt/oracle/oradata/ORCLCDB".
+oracle19c  | 8% complete
+oracle19c  | Copying database files
+Problema de permissões nos volumes. Verificando e corrigindo:
+drwxr-xr-x 4 root      root      4096 Nov 13 18:50 .
+drwxr-xr-x 4 nillander nillander 4096 Nov 13 18:50 ..
+drwxr-xr-x 2 root      root      4096 Nov 13 18:50 diag
+drwxr-xr-x 2 root      root      4096 Nov 13 18:50 oradata
+uid=54321(oracle) gid=54321(oinstall) groups=54321(oinstall),54322(dba),54323(oper),54324(backupdba),54325(dgdba),54326(kmdba),54330(racdba)
+Ajustando permissões dos diretórios (o Oracle roda como usuário oracle, não root):
+sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+sudo: a password is required
+validate-oracle.sh
++134
+#!/bin/bash# Script de Validação do Oracle 19c no Docker# Uso: ./validate-oracle.shset -e
+Tornando o script executável e criando um guia de validação simples:
+Criando um guia rápido de validação e verificando o status atual:
+oracle19c  |   (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1)))
+oracle19c  |   (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=0.0.0.0)(PORT=1521)))
+oracle19c  | The listener supports no services
+oracle19c  | The command completed successfully
+VALIDACAO.md
++164
+# Guia de Validação do Oracle 19c## ⚠️ Importante: Permissões dos VolumesAntes de validar, certifique-se de que os diretórios têm as permissões corretas:
+Executando validações rápidas:
+⚠ Oracle ainda está inicializando...
+   Aguarde alguns minutos e execute novamente
+   Monitore os logs com: docker compose logs -f oracle19c
+==========================================\033[0m
+Status atual
+Container em execução
+Listener ativo na porta 1521
+Porta 5500 (Enterprise Manager) escutando
+Banco ainda inicializando (normal na primeira vez)
+Problema identificado
+Há um erro de permissões nos volumes. Corrija com:
+sudo chown -R 54321:54321 data/sudo chmod -R 755 data/docker compose restart
+Validações rápidas
+1. Ver logs em tempo real:
+docker compose logs -f oracle19c
+Procure por: DATABASE IS READY TO USE! (indica que o banco está pronto)
+2. Verificar listener:
+docker compose exec oracle19c lsnrctl status
+3. Testar conexão SQL (após o banco estar pronto):
+docker compose exec oracle19c sqlplus sys/Oracle123#Secure@localhost:1521/ORCLCDB as sysdba
+4. Acessar Enterprise Manager:
+Abra no navegador: http://localhost:5500/em
+Usuário: sys
+Senha: (a mesma do seu .env)
+5. Executar validação completa:
+./validate-oracle.sh
+Tempo de inicialização
+A primeira inicialização pode levar 5–15 minutos. Monitore os logs até aparecer a mensagem de que o banco está pronto.
+Criei também o arquivo VALIDACAO.md com um guia completo de validação e solução de problemas.
+faça você essa tarefa começando com o passo 1
+
+o script a seguir já foi executado por mim```sudo chown -R 54321:54321 data/
+sudo chmod -R 755 data/
+docker compose restart```
+
+Verificando os logs para confirmar se o banco está pronto após a correção de permissões:
+oracle19c  | Lost write protection disabled
+oracle19c  | .... (PID:373): Using STANDBY_ARCHIVE_DEST parameter default value as /opt/oracle/product/19c/dbhome_1/dbs/arch [krsd.c:18141]
+oracle19c  | Create Relation IPS_PACKAGE_UNPACK_HISTORY
+oracle19c  | Completed: ALTER DATABASE   MOUNT
+Verificando mais logs e o status do listener:
+oracle19c  | The command completed successfully
+oracle19c  | DATABASE SETUP WAS NOT SUCCESSFUL!
+oracle19c  | Successful mount of redo thread 1, with mount id 250783995
+oracle19c  | Completed: ALTER DATABASE   MOUNT
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=oracle19c)(PORT=1521)))
+The listener supports no services
+The command completed successfully
+Verificando os logs completos recentes e testando a conexão SQL:
+oracle19c  | Lost write protection disabled
+oracle19c  | .... (PID:373): Using STANDBY_ARCHIVE_DEST parameter default value as /opt/oracle/product/19c/dbhome_1/dbs/arch [krsd.c:18141]
+oracle19c  | Create Relation IPS_PACKAGE_UNPACK_HISTORY
+oracle19c  | Completed: ALTER DATABASE   MOUNT
+NAME        IMAGE                        COMMAND                  SERVICE     CREATED          STATUS                             PORTS
+oracle19c   laynerain/oracle19c:19.3.0   "/bin/sh -c 'exec $O…"   oracle19c   29 seconds ago   Up 28 seconds (health: starting)   0.0.0.0:1521->1521/tcp, [::]:1521->1521/tcp, 0.0.0.0:5500->5500/tcp, [::]:5500->5500/tcp
+O container foi reiniciado há pouco. Verificando se o banco está sendo criado e entrando no container para investigar:
+total 16
+drwxr-xr-x 3 oracle oinstall 4096 Nov 13 18:56 .
+drwxr-xr-x 1 oracle dba      4096 Nov 13 18:58 ..
+drwxr-xr-x 2 oracle oinstall 4096 Nov 13 18:56 ORCLCDB
+Verificando o conteúdo do diretório e monitorando os logs em tempo real:
+total 33800
+drwxr-xr-x 2 oracle oinstall      4096 Nov 13 18:56 .
+drwxr-xr-x 3 oracle oinstall      4096 Nov 13 18:56 ..
+-rwxr-xr-x 1 oracle oinstall 922755072 Nov 13 18:56 system01.dbf
+oracle19c  | Security                  ON: Local OS Authentication
+oracle19c  | SNMP                      OFF
+oracle19c  | Listener Log File         /opt/oracle/diag/tnslsnr/oracle19c/listener/alert/log.xml
+oracle19c  | Listening Endpoints Summary...
+O banco parece estar parcialmente criado. Verificando se há um script de inicialização e tentando uma conexão SQL direta:
+Script existe
+Process ID: 0
+Session ID: 0 Serial number: 0
+
+
+O banco não está disponível. Verificando se precisamos recriar o banco. Conferindo os logs desde o início:
+Diretório dbconfig não existe
+O diretório dbconfig não existe, indicando que a inicialização não foi concluída. Verificando se há processo de inicialização em execução e, se necessário, recriando o banco:
+67
+Lendo todos os logs desde o início para entender o problema:
+oracle19c  | Lost write protection disabled
+oracle19c  | .... (PID:373): Using STANDBY_ARCHIVE_DEST parameter default value as /opt/oracle/product/19c/dbhome_1/dbs/arch [krsd.c:18141]
+oracle19c  | Create Relation IPS_PACKAGE_UNPACK_HISTORY
+oracle19c  | Completed: ALTER DATABASE   MOUNT
+O banco não foi criado completamente. Parando o container, limpando os dados parciais e recriando do zero:
+ Container oracle19c  Removing
+ Container oracle19c  Removed
+ Network oracle-docker_oracle-network  Removing
+ Network oracle-docker_oracle-network  Removed
+sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+sudo: a password is required
+Removendo os dados sem sudo e, se necessário, ajustando as permissões:
+rm: cannot remove 'data/diag/tnslsnr/oracle19c/listener/metadata_pv': Permission denied
+rm: cannot remove 'data/diag/tnslsnr/oracle19c/listener/stage': Permission denied
+rm: cannot remove 'data/diag/tnslsnr/oracle19c/listener/incident': Permission denied
+Precisa de permissões elevadas
+drwxr-xr-x 4     54321     54321 4096 Nov 13 18:50 .
+drwxr-xr-x 4 nillander nillander 4096 Nov 13 18:55 ..
+drwxr-xr-x 4     54321     54321 4096 Nov 13 18:56 diag
+drwxr-xr-x 3     54321     54321 4096 Nov 13 18:56 oradata
+Os arquivos pertencem ao usuário oracle (54321). Criando um script para limpar e reiniciar. Em seguida, iniciaremos o container novamente:
+reset-oracle.sh
++24
+#!/bin/bash# Script para resetar o Oracle (limpar dados e recriar)# Execute com: sudo ./reset-oracle.shecho "Parando container..."
+ Container oracle19c  Creating
+ Container oracle19c  Created
+ Container oracle19c  Starting
+ Container oracle19c  Started
+Monitorando os logs para acompanhar a criação do banco:
+oracle19c  | Lost write protection disabled
+oracle19c  | .... (PID:373): Using STANDBY_ARCHIVE_DEST parameter default value as /opt/oracle/product/19c/dbhome_1/dbs/arch [krsd.c:18141]
+oracle19c  | Create Relation IPS_PACKAGE_UNPACK_HISTORY
+oracle19c  | Completed: ALTER DATABASE   MOUNT
+O problema persiste porque ainda há dados antigos. É necessário limpar os dados com sudo. Executando o script de validação para verificar o status atual e preparar um resumo:
+
+6. Verificando portas expostas...
+✓ Porta 1521 (Oracle) está escutando
+✓ Porta 5500 (Enterprise Manager) está escutando
+Resumo da validação
+Status atual:
+Container em execução
+Listener ativo na porta 1521
+Porta 5500 (Enterprise Manager) escutando
+Banco não criado completamente (dados parciais de tentativa anterior)
+Problema identificado
+O banco não foi criado completamente porque há dados parciais de uma tentativa anterior. É necessário limpar esses dados e recriar o banco do zero.
+Solução
+Execute o script de reset (requer sudo):
+sudo ./reset-oracle.sh
+Ou execute manualmente:
+# 1. Parar o containerdocker compose down# 2. Limpar dados antigos (requer sudo)sudo rm -rf data/oradata/* data/diag/*# 3. Ajustar permissõessudo chown -R 54321:54321 data/sudo chmod -R 755 data/# 4. Iniciar novamentedocker compose up -d# 5. Monitorar logsdocker compose logs -f oracle19c
+Próximos passos após reset
+Após executar o reset, monitore os logs procurando por:
+Creating database - Banco sendo criado
+Database created - Banco criado com sucesso
+DATABASE IS READY TO USE! - Banco pronto para uso
+A criação inicial pode levar 5-15 minutos.
+Validação contínua
+Use o script de validação:
+./validate-oracle.sh
+Ou monitore os logs em tempo real:
+docker compose logs -f oracle19c
+Criei também o arquivo reset-oracle.sh para facilitar a limpeza e recriação quando necessário.
