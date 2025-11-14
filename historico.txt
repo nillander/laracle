@@ -22,7 +22,7 @@ Restart policy configurada
 .gitignore — Ignora dados e arquivos sensíveis
 Conteúdo do arquivo .env
 Crie manualmente o arquivo .env na raiz do projeto com:
-# Oracle 19c - Configurações do Ambiente# PortasORACLE_PORT=1521EM_PORT=5500# Configurações do Banco de DadosORACLE_SID=ORCLCDBORACLE_PDB=ORCLPDB1ORACLE_PWD=Oracle123#SecureORACLE_EDITION=standardORACLE_CHARACTERSET=AL32UTF8# Timezone (padrão: America/Sao_Paulo para Brasil)TZ=America/Sao_Paulo# Limites de RecursosMEMORY_LIMIT=2gMEMORY_RESERVATION=1gCPUS_LIMIT=2CPUS_RESERVATION=1
+# Oracle 19c - Configurações do Ambiente# PortasORACLE_PORT=1521EM_PORT=5500# Configurações do Banco de DadosORACLE_SID=ORCLCDBORACLE_PDB=ORCLPDB1ORACLE_PWD=Oracle123SecureORACLE_EDITION=standardORACLE_CHARACTERSET=AL32UTF8# Timezone (padrão: America/Sao_Paulo para Brasil)TZ=America/Sao_Paulo# Limites de RecursosMEMORY_LIMIT=2gMEMORY_RESERVATION=1gCPUS_LIMIT=2CPUS_RESERVATION=1
 Melhorias implementadas
 Caminhos adaptados para WSL2/Linux (volumes relativos)
 Timezone padrão America/Sao_Paulo
@@ -88,7 +88,7 @@ Procure por: DATABASE IS READY TO USE! (indica que o banco está pronto)
 2. Verificar listener:
 docker compose exec oracle19c lsnrctl status
 3. Testar conexão SQL (após o banco estar pronto):
-docker compose exec oracle19c sqlplus sys/Oracle123#Secure@localhost:1521/ORCLCDB as sysdba
+docker compose exec oracle19c sqlplus sys/Oracle123Secure@localhost:1521/ORCLCDB as sysdba
 4. Acessar Enterprise Manager:
 Abra no navegador: http://localhost:5500/em
 Usuário: sys

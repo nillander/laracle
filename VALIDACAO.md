@@ -46,7 +46,7 @@ docker compose exec oracle19c lsnrctl status
 ### 4. Testar Conexão SQL*Plus
 
 ```bash
-docker compose exec oracle19c sqlplus sys/Oracle123#Secure@localhost:1521/ORCLCDB as sysdba
+docker compose exec oracle19c sqlplus sys/Oracle123Secure@localhost:1521/ORCLCDB as sysdba
 ```
 
 Dentro do SQL*Plus, execute:
@@ -55,7 +55,7 @@ SELECT 'Oracle está funcionando!' FROM DUAL;
 EXIT;
 ```
 
-**Nota:** Substitua `Oracle123#Secure` pela senha definida no seu `.env`
+**Nota:** Substitua `Oracle123Secure` pela senha definida no seu `.env`
 
 ### 5. Verificar Portas
 

@@ -70,7 +70,7 @@ echo ""
 # 5. Testar conexão SQL*Plus (se disponível)
 echo "5. Testando conexão ao banco de dados..."
 SQL_TEST=$(docker compose exec -T oracle19c sqlplus -s /nolog <<EOF 2>&1
-conn sys/Oracle123#Secure@localhost:1521/ORCLCDB as sysdba
+conn sys/Oracle123Secure@localhost:1521/ORCLCDB as sysdba
 SELECT 'CONNECTION_OK' FROM DUAL;
 exit;
 EOF
